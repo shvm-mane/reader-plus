@@ -28,9 +28,10 @@
   };
   const DEFAULTS = { theme: "sepia", font: "serif", justify: false, size: 20, lh: 1.6, ls: 0, ws: 0, width: 34 };
 
-  const CSS = `
+  const STYLE = `
     :host { all: initial; }
     * { box-sizing: border-box; }
+    ::selection { background: Highlight; color: HighlightText; }
     .root {
       min-height: 100vh; display: flow-root;
       background: var(--bg); color: var(--fg);
@@ -38,19 +39,22 @@
       letter-spacing: var(--ls); word-spacing: var(--ws);
       -webkit-font-smoothing: antialiased;
     }
-    .sepia { --bg: #F8F1E3; --fg: #4F321C; --muted: #A08E78; --line: #E4D8C2; }
-    .dark  { --bg: #151515; --fg: #8D8D93; --muted: #5E5E63; --line: #2A2A2C; }
+    .sepia { --bg: #F8F1E3; --fg: #4F321C; --muted: #A08E78; --line: #E4D8C2; --link: #3E6189; --visited: #6E4E86; }
+    .dark  { --bg: #151515; --fg: #8D8D93; --muted: #5E5E63; --line: #2A2A2C; --link: #7F98BD; --visited: #9C88B8; }
+    .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 { color: #C7C7CC; }
     .serif { --font: "New York", ui-serif, Georgia, serif; }
     .sans  { --font: "SF Pro Text", -apple-system, system-ui, sans-serif; }
     .justify .body { text-align: justify; hyphens: auto; }
 
     article { max-width: var(--width); margin: 0 auto; padding: 72px 24px 120px; }
     .meta { font: 13px -apple-system, system-ui, sans-serif; letter-spacing: 0; color: var(--muted); margin: 0 0 8px; }
-    h1 { font-size: 1.8em; line-height: 1.2; font-weight: 600; margin: 0 0 1.4em; }
+    h1 { font-size: 1.8em; line-height: 1.2; font-weight: 600; margin: 0 0 .6em; }
+    .dek { font-size: 1.1em; color: var(--muted); margin: 0 0 1.4em; }
     .body h1, .body h2, .body h3, .body h4 { line-height: 1.3; font-weight: 600; margin: 1.6em 0 .6em; text-align: left; }
     .body h1 { font-size: 1.4em; } .body h2 { font-size: 1.25em; } .body h3 { font-size: 1.1em; }
     p { margin: 0 0 1em; }
-    a { color: inherit; text-decoration: underline; text-decoration-color: var(--muted); text-underline-offset: 2px; }
+    a { color: var(--link); text-decoration: underline; text-decoration-color: currentColor; text-underline-offset: 2px; }
+    a:visited { color: var(--visited); }
     img, video, figure, iframe, svg { max-width: 100%; height: auto; border-radius: 0; }
     figure { margin: 1.5em 0; }
     figcaption { font-size: .75em; color: var(--muted); margin-top: .5em; }
@@ -85,16 +89,33 @@
   const shadow = host.attachShadow({ mode: "open" });
 
   const style = document.createElement("style");
-  style.textContent = CSS;
+  style.textContent = STYLE;
 
   const root = document.createElement("div");
 
   const meta = [article.siteName, article.byline].filter(Boolean).join(" · ");
   const art = document.createElement("article");
-  art.innerHTML = `${meta ? `<p class="meta"></p>` : ""}<h1></h1><div class="body"></div>`;
+  art.innerHTML = `${meta ? `<p class="meta"></p>` : ""}<h1></h1><p class="dek"></p><div class="body"></div>`;
   if (meta) art.querySelector(".meta").textContent = meta;
   art.querySelector("h1").textContent = article.title || document.title;
-  art.querySelector(".body").innerHTML = article.content;
+  const body = art.querySelector(".body");
+  body.innerHTML = article.content;
+  // standfirst + lead figure usually sit outside the article body Readability picks
+  const dek = (article.excerpt || "").trim();
+  const norm = (t) => t.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (dek && !norm(body.textContent).includes(norm(dek).slice(0, 40))) art.querySelector(".dek").textContent = dek;
+  else art.querySelector(".dek").remove();
+  const leadImg = document.querySelector("main figure img, article figure img");
+  if (leadImg && !body.querySelector("img")) {
+    const fig = document.createElement("figure");
+    const img = document.createElement("img");
+    img.src = leadImg.currentSrc || leadImg.src;
+    img.alt = leadImg.alt;
+    fig.append(img);
+    const cap = leadImg.closest("figure").querySelector("figcaption");
+    if (cap) fig.append(Object.assign(document.createElement("figcaption"), { textContent: cap.textContent.trim() }));
+    body.prepend(fig);
+  }
 
   const aa = document.createElement("div");
   aa.className = "aa";
