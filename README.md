@@ -8,7 +8,7 @@
   <a href="https://github.com/shvm-mane/reader-plus/releases/latest"><b>DOWNLOAD</b></a>
 </p>
 
-hover the tiny `Aa` in the bottom right for settings. they're remembered. press `esc` or click the icon again to close.
+hover the tiny `Aa` in the bottom right for appearance settings.
 
 ## install
 
