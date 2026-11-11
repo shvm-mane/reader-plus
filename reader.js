@@ -3,7 +3,13 @@
   const existing = document.getElementById(ID);
   if (existing) return existing.__close();
 
-  const article = new Readability(document.cloneNode(true)).parse();
+  const doc = document.cloneNode(true);
+  // unwrap small heading wrappers (e.g. Wikipedia's "History [edit]") so Readability keeps the heading
+  doc.querySelectorAll("h2, h3, h4, h5, h6").forEach((h) => {
+    const w = h.parentElement;
+    if (w && w.tagName === "DIV" && w.textContent.length < h.textContent.length + 20) w.replaceWith(h);
+  });
+  const article = new Readability(doc).parse();
 
   if (!article || !article.content) {
     const n = document.createElement("div");
